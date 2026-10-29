@@ -42,13 +42,19 @@ export function loadWindows(): WindowState[] {
     if (!saved) return DEFAULT_WINDOWS
     const parsed = JSON.parse(saved) as WindowState[]
     if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_WINDOWS
-    return parsed.map((item) => ({
+    const viewportWidth = window.innerWidth
+    const viewportHeight = window.innerHeight
+    return parsed.map((item) => {
+      const width = Math.min(viewportWidth - 16, Math.min(760, Math.max(320, item.width || 500)))
+      const height = Math.min(viewportHeight - 52, Math.min(560, Math.max(220, item.height || 310)))
+      return {
       ...item,
-      width: Math.min(760, Math.max(320, item.width || 500)),
-      height: Math.min(560, Math.max(220, item.height || 310)),
-      x: Math.max(8, item.x || 8),
-      y: Math.max(8, item.y || 8),
-    }))
+      width,
+      height,
+      x: Math.min(Math.max(8, item.x || 8), Math.max(8, viewportWidth - width - 8)),
+      y: Math.min(Math.max(8, item.y || 8), Math.max(8, viewportHeight - height - 44)),
+      }
+    })
   } catch {
     return DEFAULT_WINDOWS
   }
