@@ -5,8 +5,9 @@ import { WindowFrame } from '../components/WindowFrame'
 import { Minesweeper } from '../components/apps/Minesweeper'
 import { Notepad } from '../components/apps/Notepad'
 import { Terminal } from '../components/apps/Terminal'
+import { Paint } from '../components/apps/Paint'
 import { listFiles } from '../lib/vfs'
-import { APP_META, DEFAULT_WINDOWS, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
+import { APP_META, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
 export const Route = createFileRoute('/')({ component: Win95Desktop })
 
@@ -63,6 +64,7 @@ function Win95Desktop() {
         <DesktopIcon icon="🌐" label="Internet Explorer" onOpen={() => openApp('about')} />
         <DesktopIcon icon="📝" label="Notepad" onOpen={() => openApp('notepad')} />
         <DesktopIcon icon="💣" label="Minesweeper" onOpen={() => openApp('minesweeper')} />
+        <DesktopIcon icon="🎨" label="Paint" onOpen={() => openApp('paint')} />
       </div>
 
       {windows.map((item) => item.minimized ? null : (
@@ -107,6 +109,7 @@ function StartMenu({ onOpen, onClose }: { onOpen: (id: AppId) => void; onClose: 
     <button className="start-item" onClick={() => onOpen('computer')}><span>🖥️</span><b>My Computer</b></button>
     <button className="start-item" onClick={() => onOpen('notepad')}><span>📝</span><b>Accessories</b><em>Notepad</em></button>
     <button className="start-item" onClick={() => onOpen('minesweeper')}><span>💣</span><b>Games</b><em>Minesweeper</em></button>
+    <button className="start-item" onClick={() => onOpen('paint')}><span>🎨</span><b>Accessories</b><em>Paint</em></button>
     <button className="start-item" onClick={() => onOpen('terminal')}><span>▣</span><b>MS-DOS Prompt</b></button>
     <hr /><button className="start-item" onClick={onClose}><span>⏻</span><b>Shut Down...</b></button>
   </div></div>
@@ -117,6 +120,7 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'terminal') return <Terminal />
   if (id === 'minesweeper') return <Minesweeper />
   if (id === 'computer') return <FileExplorer onOpen={onOpen} />
+  if (id === 'paint') return <Paint />
   return <Welcome onOpen={onOpen} />
 }
 
