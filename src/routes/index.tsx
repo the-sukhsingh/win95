@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import { DesktopIcon } from '../components/DesktopIcon'
 import { WindowFrame } from '../components/WindowFrame'
 import { Minesweeper } from '../components/apps/Minesweeper'
+import { Notepad } from '../components/apps/Notepad'
+import { Terminal } from '../components/apps/Terminal'
+import { listFiles } from '../lib/vfs'
 import { APP_META, DEFAULT_WINDOWS, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
 export const Route = createFileRoute('/')({ component: Win95Desktop })
@@ -122,19 +125,5 @@ function Welcome({ onOpen }: { onOpen: (id: AppId) => void }) {
 }
 
 function FileExplorer({ onOpen }: { onOpen: (id: AppId) => void }) {
-  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="address">📁 <b>Address:</b> C:\WINDOWS\Desktop</div><div className="file-grid"><button onDoubleClick={() => onOpen('notepad')}><span>📝</span><b>README.TXT</b><small>Text Document</small></button><button onDoubleClick={() => onOpen('about')}><span>🌐</span><b>WEB95.URL</b><small>Internet Shortcut</small></button><button onDoubleClick={() => onOpen('minesweeper')}><span>💣</span><b>MINESW~1.EXE</b><small>Application</small></button><button><span>📂</span><b>MY DOCS</b><small>File Folder</small></button></div><div className="statusbar">4 object(s) &nbsp; &nbsp; 12.4 MB available</div></div>
-}
-
-function Notepad() {
-  const [text, setText] = useState('Welcome to Windows 95 Web Edition!\\n\\nThis is a fully functional notepad.\\nType something brilliant here...\\n')
-  const download = () => { const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'README.TXT'; anchor.click(); URL.revokeObjectURL(url) }
-  return <div className="notepad"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; Search&nbsp;&nbsp; Help</div><textarea value={text} onChange={(event) => setText(event.target.value)} spellCheck={false} /><div className="notepad-actions"><button onClick={download}>Save as .TXT</button><span>{text.length} characters</span></div></div>
-}
-
-function Terminal() {
-  const [lines, setLines] = useState(['Microsoft(R) Windows 95', '(C)Copyright Microsoft Corp 1981-1995.', '', 'C:\\WINDOWS> Type "help" for a list of commands.'])
-  const [value, setValue] = useState('')
-  const commands = useMemo(() => ({ help: 'DIR  CD  CLS  VER  MATRIX  ABOUT', ver: 'Windows 95 Web Edition [Version 4.00.950]', dir: 'README.TXT  WEB95.URL  MINESW~1.EXE  MY DOCS', about: 'A lovingly crafted browser-based desktop.', matrix: 'Wake up, Neo... the Matrix has you.', cd: 'C:\\WINDOWS', cls: '' }), [])
-  const run = () => { const input = value.trim().toLowerCase(); if (!input) return; setLines((current) => [...current, `C:\\WINDOWS>${value}`, commands[input as keyof typeof commands] ?? `'${input}' is not recognized as an internal command.`]); setValue('') }
-  return <div className="terminal"><div className="terminal-output">{lines.map((line, index) => <div key={`${line}-${index}`}>{line || '\u00a0'}</div>)}</div><div className="terminal-input"><span>C:\WINDOWS&gt;</span><input autoFocus value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && run()} /></div></div>
+  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="address">📁 <b>Address:</b> C:\WINDOWS\Desktop</div><div className="file-grid">{listFiles().map((file) => <button key={file.name} onDoubleClick={() => file.name === 'README.TXT' ? onOpen('notepad') : file.name === 'MINESW~1.EXE' ? onOpen('minesweeper') : undefined}><span>{file.type === 'folder' ? '📂' : file.name.endsWith('.EXE') ? '💣' : file.name.endsWith('.URL') ? '🌐' : '📝'}</span><b>{file.name}</b><small>{file.type === 'folder' ? 'File Folder' : 'File'}</small></button>)}</div><div className="statusbar">{listFiles().length} object(s) &nbsp; &nbsp; 12.4 MB available</div></div>
 }
