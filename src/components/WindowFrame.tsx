@@ -32,7 +32,9 @@ export function WindowFrame({ state, active, onFocus, onClose, onMinimize, onMax
 
   return (
     <section className={`window ${active ? 'active' : ''} ${state.maximized ? 'maximized' : ''}`}
-      style={{ left: state.x, top: state.y, width: state.width, height: state.height, zIndex: state.z }}
+      style={state.maximized
+        ? { left: 0, top: 0, right: 0, bottom: 34, width: 'auto', height: 'auto', zIndex: state.z }
+        : { left: state.x, top: state.y, width: state.width, height: state.height, zIndex: state.z }}
       onPointerDown={onFocus} onPointerMove={onPointerMove}
       onPointerUp={() => { drag.current = null }} onPointerCancel={() => { drag.current = null }}>
       <header className="titlebar" onPointerDown={beginDrag}>
