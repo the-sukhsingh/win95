@@ -72,7 +72,8 @@ function Win95Desktop() {
           onClose={() => setWindows((current) => current.filter((entry) => entry.id !== item.id))}
           onMinimize={() => updateWindow(item.id, { minimized: true })}
           onMaximize={() => updateWindow(item.id, { maximized: !item.maximized })}
-          onMove={(x, y) => updateWindow(item.id, { x, y })}>
+          onMove={(x, y) => updateWindow(item.id, { x, y })}
+          onResize={(width, height) => updateWindow(item.id, { width, height })}>
           <WindowContent id={item.id} onOpen={openApp} />
         </WindowFrame>
       ))}

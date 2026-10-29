@@ -32,7 +32,7 @@ button { cursor: pointer; }
 .titlebar div { display: flex; gap: 2px; }
 .titlebar button { width: 18px; height: 17px; padding: 0; line-height: 12px; border: 2px outset #eee; background: #c0c0c0; font-weight: 700; }
 .window-body { margin: 2px; border: 2px inset #eee; background: #fff; min-height: 216px; }
-.resize-grip { position: absolute; right: 2px; bottom: 2px; width: 11px; height: 11px; background: linear-gradient(135deg, transparent 48%, #777 49%, #777 57%, transparent 58%), linear-gradient(135deg, transparent 60%, #777 61%, #777 69%, transparent 70%); }
+.resize-grip { position: absolute; right: 2px; bottom: 2px; width: 11px; height: 11px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 48%, #777 49%, #777 57%, transparent 58%), linear-gradient(135deg, transparent 60%, #777 61%, #777 69%, transparent 70%); }
 .menu-strip, .address { background: #c0c0c0; padding: 5px 7px; font-size: 11px; border-bottom: 1px solid #888; }
 .welcome { padding: 17px; background: #f5f5f5; min-height: 246px; }
 .welcome-hero { display: flex; gap: 14px; align-items: center; padding-bottom: 15px; border-bottom: 1px solid #aaa; }

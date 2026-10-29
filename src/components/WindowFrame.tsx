@@ -10,18 +10,23 @@ type Props = {
   onMinimize: () => void
   onMaximize: () => void
   onMove: (x: number, y: number) => void
+  onResize: (width: number, height: number) => void
   children: ReactNode
 }
 
-export function WindowFrame({ state, active, onFocus, onClose, onMinimize, onMaximize, onMove, children }: Props) {
-  const drag = useRef<{ dx: number; dy: number } | null>(null)
+export function WindowFrame({ state, active, onFocus, onClose, onMinimize, onMaximize, onMove, onResize, children }: Props) {
+  const drag = useRef<{ mode: 'move' | 'resize'; dx: number; dy: number; width: number; height: number } | null>(null)
   const onPointerMove = (event: PointerEvent) => {
     if (!drag.current || state.maximized) return
-    onMove(Math.max(8, event.clientX - drag.current.dx), Math.max(8, event.clientY - drag.current.dy))
+    if (drag.current.mode === 'resize') {
+      onResize(Math.max(280, drag.current.width + event.clientX - drag.current.dx), Math.max(190, drag.current.height + event.clientY - drag.current.dy))
+    } else {
+      onMove(Math.max(8, event.clientX - drag.current.dx), Math.max(8, event.clientY - drag.current.dy))
+    }
   }
   const beginDrag = (event: PointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest('button')) return
-    drag.current = { dx: event.clientX - state.x, dy: event.clientY - state.y }
+    drag.current = { mode: 'move', dx: event.clientX - state.x, dy: event.clientY - state.y, width: state.width, height: state.height }
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
@@ -39,7 +44,11 @@ export function WindowFrame({ state, active, onFocus, onClose, onMinimize, onMax
         </div>
       </header>
       <div className="window-body">{children}</div>
-      {!state.maximized && <div className="resize-grip" />}
+      {!state.maximized && <div className="resize-grip" onPointerDown={(event) => {
+        event.stopPropagation()
+        drag.current = { mode: 'resize', dx: event.clientX, dy: event.clientY, width: state.width, height: state.height }
+        event.currentTarget.setPointerCapture(event.pointerId)
+      }} />}
     </section>
   )
 }
