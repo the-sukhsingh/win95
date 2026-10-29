@@ -6,13 +6,14 @@ import { Minesweeper } from '../components/apps/Minesweeper'
 import { Notepad } from '../components/apps/Notepad'
 import { Terminal } from '../components/apps/Terminal'
 import { Paint } from '../components/apps/Paint'
+import { InternetExplorer } from '../components/apps/InternetExplorer'
 import { listFiles } from '../lib/vfs'
 import { APP_META, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
 export const Route = createFileRoute('/')({ component: Win95Desktop })
 
 function Win95Desktop() {
-  const [booting, setBooting] = useState(true)
+  const [powerState, setPowerState] = useState<'boot' | 'desktop' | 'shutdown'>('boot')
   const [windows, setWindows] = useState<WindowState[]>(() => loadWindows())
   const [activeId, setActiveId] = useState<AppId>('about')
   const [startOpen, setStartOpen] = useState(false)
@@ -21,7 +22,7 @@ function Win95Desktop() {
   const [context, setContext] = useState<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setBooting(false), 1200)
+    const timer = window.setTimeout(() => setPowerState('desktop'), 1500)
     const tick = window.setInterval(() => setClock(new Date()), 1000)
     return () => { window.clearTimeout(timer); window.clearInterval(tick) }
   }, [])
@@ -48,7 +49,8 @@ function Win95Desktop() {
     setWindows((current) => current.map((item) => item.id === id ? { ...item, z: Date.now(), minimized: false } : item))
   }
 
-  if (booting) return <BootScreen onEnter={() => setBooting(false)} />
+  if (powerState === 'boot') return <BootScreen onEnter={() => setPowerState('desktop')} />
+  if (powerState === 'shutdown') return <ShutdownScreen onPowerOn={() => setPowerState('boot')} />
 
   return (
     <main className={`desktop ${crt ? 'crt' : ''}`} onClick={() => context && setContext(null)} onContextMenu={(event) => {
@@ -61,7 +63,7 @@ function Win95Desktop() {
       <div className="desktop-icons">
         <DesktopIcon icon="🖥️" label="My Computer" onOpen={() => openApp('computer')} />
         <DesktopIcon icon="🗑️" label="Recycle Bin" onOpen={() => openApp('about')} />
-        <DesktopIcon icon="🌐" label="Internet Explorer" onOpen={() => openApp('about')} />
+        <DesktopIcon icon="🌐" label="Internet Explorer" onOpen={() => openApp('internet-explorer')} />
         <DesktopIcon icon="📝" label="Notepad" onOpen={() => openApp('notepad')} />
         <DesktopIcon icon="💣" label="Minesweeper" onOpen={() => openApp('minesweeper')} />
         <DesktopIcon icon="🎨" label="Paint" onOpen={() => openApp('paint')} />
@@ -86,7 +88,7 @@ function Win95Desktop() {
         <button onClick={() => setContext(null)}>Refresh</button>
       </div>}
 
-      {startOpen && <StartMenu onOpen={openApp} onClose={() => setStartOpen(false)} />}
+      {startOpen && <StartMenu onOpen={openApp} onShutdown={() => { setStartOpen(false); setPowerState('shutdown') }} />}
       <footer className="taskbar">
         <button className={`start-button ${startOpen ? 'pressed' : ''}`} onClick={(event) => { event.stopPropagation(); setStartOpen((value) => !value) }}>
           <strong>⊞</strong> Start
@@ -101,18 +103,23 @@ function Win95Desktop() {
 }
 
 function BootScreen({ onEnter }: { onEnter: () => void }) {
-  return <section className="boot-screen" onClick={onEnter}><div className="boot-card"><div className="boot-logo"><span>▤</span><strong>Microsoft</strong></div><div className="boot-line" /><p>Starting Windows 95 Web Edition...</p><div className="progress"><i /></div><button onClick={onEnter}>Enter desktop</button><small>Click anywhere to skip</small></div></section>
+  return <section className="boot-screen"><div className="boot-card"><div className="boot-logo"><span>▤</span><strong>Microsoft</strong></div><div className="boot-line" /><p>Starting Windows 95 Web Edition...</p><div className="progress"><i /></div><button onClick={onEnter}>Enter desktop</button><small>Click anywhere to skip</small></div></section>
 }
 
-function StartMenu({ onOpen, onClose }: { onOpen: (id: AppId) => void; onClose: () => void }) {
+function ShutdownScreen({ onPowerOn }: { onPowerOn: () => void }) {
+  return <section className="shutdown-screen"><div className="shutdown-card"><span className="shutdown-logo">▤</span><h1>Windows 95</h1><p>It is now safe to turn off your computer.</p><button onClick={onPowerOn}>Power on again</button></div></section>
+}
+
+function StartMenu({ onOpen, onShutdown }: { onOpen: (id: AppId) => void; onShutdown: () => void }) {
   return <div className="start-menu" onClick={(event) => event.stopPropagation()}><div className="start-rail">Windows<span>95</span></div><div className="start-items">
     <button className="start-item featured" onClick={() => onOpen('about')}><span>▤</span><b>Welcome</b><em>Read me</em></button>
     <button className="start-item" onClick={() => onOpen('computer')}><span>🖥️</span><b>My Computer</b></button>
+    <button className="start-item" onClick={() => onOpen('internet-explorer')}><span>🌐</span><b>Internet Explorer</b><em>Browse the web</em></button>
     <button className="start-item" onClick={() => onOpen('notepad')}><span>📝</span><b>Accessories</b><em>Notepad</em></button>
     <button className="start-item" onClick={() => onOpen('minesweeper')}><span>💣</span><b>Games</b><em>Minesweeper</em></button>
     <button className="start-item" onClick={() => onOpen('paint')}><span>🎨</span><b>Accessories</b><em>Paint</em></button>
     <button className="start-item" onClick={() => onOpen('terminal')}><span>▣</span><b>MS-DOS Prompt</b></button>
-    <hr /><button className="start-item" onClick={onClose}><span>⏻</span><b>Shut Down...</b></button>
+    <hr />    <button className="start-item" onClick={onShutdown}><span>⏻</span><b>Shut Down...</b></button>
   </div></div>
 }
 
@@ -122,6 +129,7 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'minesweeper') return <Minesweeper />
   if (id === 'computer') return <FileExplorer onOpen={onOpen} />
   if (id === 'paint') return <Paint />
+  if (id === 'internet-explorer') return <InternetExplorer />
   return <Welcome onOpen={onOpen} />
 }
 

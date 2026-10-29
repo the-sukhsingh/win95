@@ -1,4 +1,4 @@
-export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire'
+export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer'
 
 export type WindowState = {
   id: AppId
@@ -21,6 +21,7 @@ export const APP_META: Record<AppId, AppMeta> = {
   about: { title: 'Welcome to Windows 95', icon: '▤' },
   paint: { title: 'Paint', icon: '🎨' },
   solitaire: { title: 'Solitaire', icon: '🃏' },
+  'internet-explorer': { title: 'Internet Explorer', icon: '🌐' },
 }
 
 export const DEFAULT_WINDOWS: WindowState[] = [{
@@ -40,7 +41,14 @@ export function loadWindows(): WindowState[] {
     const saved = window.localStorage.getItem('win95.windows')
     if (!saved) return DEFAULT_WINDOWS
     const parsed = JSON.parse(saved) as WindowState[]
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_WINDOWS
+    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_WINDOWS
+    return parsed.map((item) => ({
+      ...item,
+      width: Math.min(760, Math.max(320, item.width || 500)),
+      height: Math.min(560, Math.max(220, item.height || 310)),
+      x: Math.max(8, item.x || 8),
+      y: Math.max(8, item.y || 8),
+    }))
   } catch {
     return DEFAULT_WINDOWS
   }
