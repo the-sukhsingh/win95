@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { DesktopIcon } from '../components/DesktopIcon'
 import { WindowFrame } from '../components/WindowFrame'
+import { Minesweeper } from '../components/apps/Minesweeper'
 import { APP_META, DEFAULT_WINDOWS, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
 export const Route = createFileRoute('/')({ component: Win95Desktop })
@@ -136,12 +137,4 @@ function Terminal() {
   const commands = useMemo(() => ({ help: 'DIR  CD  CLS  VER  MATRIX  ABOUT', ver: 'Windows 95 Web Edition [Version 4.00.950]', dir: 'README.TXT  WEB95.URL  MINESW~1.EXE  MY DOCS', about: 'A lovingly crafted browser-based desktop.', matrix: 'Wake up, Neo... the Matrix has you.', cd: 'C:\\WINDOWS', cls: '' }), [])
   const run = () => { const input = value.trim().toLowerCase(); if (!input) return; setLines((current) => [...current, `C:\\WINDOWS>${value}`, commands[input as keyof typeof commands] ?? `'${input}' is not recognized as an internal command.`]); setValue('') }
   return <div className="terminal"><div className="terminal-output">{lines.map((line, index) => <div key={`${line}-${index}`}>{line || '\u00a0'}</div>)}</div><div className="terminal-input"><span>C:\WINDOWS&gt;</span><input autoFocus value={value} onChange={(event) => setValue(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && run()} /></div></div>
-}
-
-function Minesweeper() {
-  const [cells, setCells] = useState(() => Array.from({ length: 36 }, (_, index) => ({ mine: [5, 11, 17, 26, 30].includes(index), open: false, flag: false })))
-  const [lost, setLost] = useState(false)
-  const reset = () => { setCells(Array.from({ length: 36 }, (_, index) => ({ mine: [5, 11, 17, 26, 30].includes(index), open: false, flag: false }))); setLost(false) }
-  const reveal = (index: number) => { if (lost || cells[index]?.flag) return; if (cells[index]?.mine) setLost(true); setCells((current) => current.map((cell, cellIndex) => cellIndex === index ? { ...cell, open: true } : cell)) }
-  return <div className="minesweeper"><div className="mine-head"><span>{lost ? '0_0' : '001'}</span><button onClick={reset}>{lost ? '☹' : '☺'}</button><span>000</span></div><div className="mine-grid">{cells.map((cell, index) => <button key={index} className={`mine-cell ${cell.open || lost && cell.mine ? 'open' : ''}`} onClick={() => reveal(index)} onContextMenu={(event) => { event.preventDefault(); setCells((current) => current.map((entry, cellIndex) => cellIndex === index ? { ...entry, flag: !entry.flag } : entry)) }}>{cell.open || lost && cell.mine ? (cell.mine ? '💣' : '') : cell.flag ? '⚑' : ''}</button>)}</div><p>{lost ? 'Boom! Try again.' : 'Left-click to reveal · Right-click to flag'}</p></div>
 }
