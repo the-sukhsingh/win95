@@ -252,10 +252,12 @@ function Calculator() {
       setError(false)
       if (waitingForOperand) { setValue('0.'); setWaitingForOperand(false) }
       else if (!value.includes('.')) setValue(`${value}.`)
-    } else if (key === 'C') { setValue('0'); setOperator(null); setStored(null); setWaitingForOperand(false); setError(false) }
+    } else if (key === 'C' || key === 'CE') { setValue('0'); if (key === 'C') { setOperator(null); setStored(null) }; setWaitingForOperand(false); setError(false) }
     else if (key === 'MC') setMemory(0)
+    else if (key === 'MS') setMemory(Number(value) || 0)
     else if (key === 'M+') setMemory(memory + (Number(value) || 0))
     else if (key === 'MR') { setValue(String(memory)); setWaitingForOperand(false); setError(false) }
+    else if (key === '⌫') { setValue(value.length > 1 ? value.slice(0, -1) : '0'); setError(false) }
     else if (key === '√') {
       const result = Math.sqrt(Number(value))
       if (!Number.isFinite(result)) { setValue('Error'); setError(true) } else setValue(String(result))
@@ -285,7 +287,8 @@ function Calculator() {
       setWaitingForOperand(true)
     }
   }
-  return <div className="calculator"><input aria-label="Calculator display" readOnly value={value} /><div className="calc-mode"><button>Standard</button><button>Scientific</button></div><div className="calc-grid">{['MC','MR','M+','C','√','±','7','8','9','÷','4','5','6','×','1','2','3','-','0','.','=','+'].map((key) => <button key={key} onClick={() => press(key)}>{key}</button>)}</div></div>
+  const keys = ['MC', 'MR', 'MS', 'M+', '⌫', 'CE', 'C', '±', '7', '8', '9', '÷', '4', '5', '6', '×', '1', '2', '3', '-', '0', '.', '=', '+']
+  return <div className="calculator"><input aria-label="Calculator display" readOnly value={value} /><div className="calc-mode"><button>Standard</button><button>Scientific</button></div><div className="calc-grid">{keys.map((key) => <button key={key} onClick={() => press(key)}>{key}</button>)}</div><div className="calc-status">Memory: {memory}</div></div>
 }
 
 function WordPad() {
