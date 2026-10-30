@@ -1,4 +1,4 @@
-export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer' | 'recycle' | 'control-panel' | 'run' | 'help' | 'calculator' | 'wordpad' | 'freecell' | 'media-player' | 'printer'
+export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer' | 'recycle' | 'control-panel' | 'run' | 'help' | 'calculator' | 'wordpad' | 'freecell' | 'media-player' | 'printer' | 'find' | 'system-tools'
 
 export type WindowState = {
   id: AppId
@@ -31,6 +31,8 @@ export const APP_META: Record<AppId, AppMeta> = {
   freecell: { title: 'FreeCell', icon: '🃏' },
   'media-player': { title: 'Media Player', icon: '▶️' },
   printer: { title: 'Printers', icon: '🖨️' },
+  find: { title: 'Find: Files or Folders', icon: '🔎' },
+  'system-tools': { title: 'System Tools', icon: '🛠️' },
 }
 
 export const DEFAULT_WINDOWS: WindowState[] = [{

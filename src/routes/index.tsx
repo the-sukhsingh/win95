@@ -140,6 +140,7 @@ function StartMenu({ onOpen, onShutdown }: { onOpen: (id: AppId) => void; onShut
     <button className="start-item featured" onClick={() => onOpen('about')}><span>▤</span><b>Welcome</b><em>Read me</em></button>
     <button className="start-item" onClick={() => onOpen('computer')}><span>🖥️</span><b>My Computer</b></button>
     <button className="start-item" onClick={() => onOpen('control-panel')}><span>⚙️</span><b>Settings</b><em>Control Panel</em></button>
+    <button className="start-item" onClick={() => onOpen('printer')}><span>🖨️</span><b>Settings</b><em>Printers</em></button>
     <button className="start-item" onClick={() => onOpen('internet-explorer')}><span>🌐</span><b>Internet Explorer</b><em>Browse the web</em></button>
     <button className="start-item" onClick={() => onOpen('notepad')}><span>📝</span><b>Accessories</b><em>Notepad</em></button>
     <button className="start-item" onClick={() => onOpen('minesweeper')}><span>💣</span><b>Games</b><em>Minesweeper</em></button>
@@ -151,6 +152,8 @@ function StartMenu({ onOpen, onShutdown }: { onOpen: (id: AppId) => void; onShut
     <button className="start-item" onClick={() => onOpen('solitaire')}><span>🃏</span><b>Games</b><em>Solitaire</em></button>
     <button className="start-item" onClick={() => onOpen('freecell')}><span>🃏</span><b>Games</b><em>FreeCell</em></button>
     <button className="start-item" onClick={() => onOpen('run')}><span>▶️</span><b>Run...</b></button>
+    <button className="start-item" onClick={() => onOpen('find')}><span>🔎</span><b>Find</b><em>Files or Folders</em></button>
+    <button className="start-item" onClick={() => onOpen('system-tools')}><span>🛠️</span><b>Programs</b><em>System Tools</em></button>
     <hr />    <button className="start-item" onClick={onShutdown}><span>⏻</span><b>Shut Down...</b></button>
   </div></div>
 }
@@ -172,6 +175,8 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'freecell') return <Solitaire freeCell />
   if (id === 'media-player') return <MediaPlayer />
   if (id === 'printer') return <Printer />
+  if (id === 'find') return <FindFiles />
+  if (id === 'system-tools') return <SystemTools />
   return <Welcome onOpen={onOpen} />
 }
 
@@ -253,4 +258,16 @@ function MediaPlayer() {
 function Printer() {
   const [jobs, setJobs] = useState<string[]>([])
   return <div className="printer-app"><div className="menu-strip">File&nbsp;&nbsp; Printer&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="printer-head"><span>🖨️</span><div><h3>Printers</h3><p>Manage your installed printers and print queue.</p></div></div><div className="printer-actions"><button onClick={() => setJobs((current) => [...current, `Document ${current.length + 1}.TXT`])}>Print test page</button><button onClick={() => setJobs([])}>Cancel all jobs</button></div><ul>{jobs.map((job) => <li key={job}>📄 {job} <small>Printing</small></li>)}</ul><div className="statusbar">{jobs.length} document(s) in queue &nbsp; • &nbsp; Microsoft Print to Web</div></div>
+}
+
+function FindFiles() {
+  const [query, setQuery] = useState('')
+  const results = listFiles().filter((file) => file.name.toLowerCase().includes(query.toLowerCase()))
+  return <div className="find-app"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; Help</div><div className="find-form"><label>Named:</label><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} /><label>Look in:</label><select><option>My Computer</option><option>C:\WINDOWS\Desktop</option></select><button>Find Now</button></div><div className="find-results">{query ? results.map((file) => <div key={file.name}>📄 <b>{file.name}</b><small>C:\WINDOWS\Desktop</small></div>) : <p>Enter a file name to begin searching.</p>}</div><div className="statusbar">{query ? `${results.length} object(s) found` : 'Ready'}</div></div>
+}
+
+function SystemTools() {
+  const [running, setRunning] = useState<string | null>(null)
+  const tools = ['ScanDisk', 'Disk Defragmenter', 'DriveSpace', 'Backup', 'System Monitor', 'Resource Meter', 'Clipboard Viewer', 'Character Map', 'Sound Recorder', 'Phone Dialer']
+  return <div className="system-tools"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="tool-list">{tools.map((tool) => <button key={tool} onClick={() => setRunning(tool)}><span>🛠️</span><b>{tool}</b><small>{running === tool ? 'Running...' : 'Double-click to open'}</small></button>)}</div>{running && <div className="tool-output"><b>{running}</b><p>{running} completed successfully. No problems were found on the virtual drive.</p><progress value={100} max={100} /></div>}<div className="statusbar">C:\ &nbsp; 12.4 MB free of 32 MB</div></div>
 }
