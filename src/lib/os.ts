@@ -1,4 +1,4 @@
-export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer'
+export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer' | 'recycle' | 'control-panel' | 'run' | 'help' | 'calculator' | 'wordpad' | 'freecell' | 'media-player' | 'printer'
 
 export type WindowState = {
   id: AppId
@@ -22,6 +22,15 @@ export const APP_META: Record<AppId, AppMeta> = {
   paint: { title: 'Paint', icon: '🎨' },
   solitaire: { title: 'Solitaire', icon: '🃏' },
   'internet-explorer': { title: 'Internet Explorer', icon: '🌐' },
+  recycle: { title: 'Recycle Bin', icon: '🗑️' },
+  'control-panel': { title: 'Control Panel', icon: '⚙️' },
+  run: { title: 'Run', icon: '▶️' },
+  help: { title: 'Windows Help', icon: '❓' },
+  calculator: { title: 'Calculator', icon: '🧮' },
+  wordpad: { title: 'WordPad', icon: '📄' },
+  freecell: { title: 'FreeCell', icon: '🃏' },
+  'media-player': { title: 'Media Player', icon: '▶️' },
+  printer: { title: 'Printers', icon: '🖨️' },
 }
 
 export const DEFAULT_WINDOWS: WindowState[] = [{

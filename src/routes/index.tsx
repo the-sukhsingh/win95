@@ -7,7 +7,7 @@ import { Notepad } from '../components/apps/Notepad'
 import { Terminal } from '../components/apps/Terminal'
 import { Paint } from '../components/apps/Paint'
 import { InternetExplorer } from '../components/apps/InternetExplorer'
-import { listFiles } from '../lib/vfs'
+import { createFile, deleteFile, emptyRecycle, listFiles, listRecycle, renameFile, restoreRecycle, type VfsFile } from '../lib/vfs'
 import { APP_META, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
 export const Route = createFileRoute('/')({ component: Win95Desktop })
@@ -62,11 +62,12 @@ function Win95Desktop() {
       <div className="desktop-brand">Windows 95<span>WEB EDITION</span></div>
       <div className="desktop-icons">
         <DesktopIcon icon="🖥️" label="My Computer" onOpen={() => openApp('computer')} />
-        <DesktopIcon icon="🗑️" label="Recycle Bin" onOpen={() => openApp('about')} />
+        <DesktopIcon icon="🗑️" label="Recycle Bin" onOpen={() => openApp('recycle')} />
         <DesktopIcon icon="🌐" label="Internet Explorer" onOpen={() => openApp('internet-explorer')} />
         <DesktopIcon icon="📝" label="Notepad" onOpen={() => openApp('notepad')} />
         <DesktopIcon icon="💣" label="Minesweeper" onOpen={() => openApp('minesweeper')} />
         <DesktopIcon icon="🎨" label="Paint" onOpen={() => openApp('paint')} />
+        <DesktopIcon icon="🧮" label="Calculator" onOpen={() => openApp('calculator')} />
       </div>
 
       {windows.map((item) => item.minimized ? null : (
@@ -114,11 +115,16 @@ function StartMenu({ onOpen, onShutdown }: { onOpen: (id: AppId) => void; onShut
   return <div className="start-menu" onClick={(event) => event.stopPropagation()}><div className="start-rail">Windows<span>95</span></div><div className="start-items">
     <button className="start-item featured" onClick={() => onOpen('about')}><span>▤</span><b>Welcome</b><em>Read me</em></button>
     <button className="start-item" onClick={() => onOpen('computer')}><span>🖥️</span><b>My Computer</b></button>
+    <button className="start-item" onClick={() => onOpen('control-panel')}><span>⚙️</span><b>Settings</b><em>Control Panel</em></button>
     <button className="start-item" onClick={() => onOpen('internet-explorer')}><span>🌐</span><b>Internet Explorer</b><em>Browse the web</em></button>
     <button className="start-item" onClick={() => onOpen('notepad')}><span>📝</span><b>Accessories</b><em>Notepad</em></button>
     <button className="start-item" onClick={() => onOpen('minesweeper')}><span>💣</span><b>Games</b><em>Minesweeper</em></button>
     <button className="start-item" onClick={() => onOpen('paint')}><span>🎨</span><b>Accessories</b><em>Paint</em></button>
     <button className="start-item" onClick={() => onOpen('terminal')}><span>▣</span><b>MS-DOS Prompt</b></button>
+    <button className="start-item" onClick={() => onOpen('calculator')}><span>🧮</span><b>Accessories</b><em>Calculator</em></button>
+    <button className="start-item" onClick={() => onOpen('wordpad')}><span>📄</span><b>Accessories</b><em>WordPad</em></button>
+    <button className="start-item" onClick={() => onOpen('help')}><span>❓</span><b>Help</b></button>
+    <button className="start-item" onClick={() => onOpen('run')}><span>▶️</span><b>Run...</b></button>
     <hr />    <button className="start-item" onClick={onShutdown}><span>⏻</span><b>Shut Down...</b></button>
   </div></div>
 }
@@ -130,6 +136,12 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'computer') return <FileExplorer onOpen={onOpen} />
   if (id === 'paint') return <Paint />
   if (id === 'internet-explorer') return <InternetExplorer />
+  if (id === 'recycle') return <RecycleBin />
+  if (id === 'control-panel') return <ControlPanel onOpen={onOpen} />
+  if (id === 'calculator') return <Calculator />
+  if (id === 'wordpad') return <WordPad />
+  if (id === 'help') return <Help />
+  if (id === 'run') return <RunDialog onOpen={onOpen} />
   return <Welcome onOpen={onOpen} />
 }
 
@@ -138,5 +150,58 @@ function Welcome({ onOpen }: { onOpen: (id: AppId) => void }) {
 }
 
 function FileExplorer({ onOpen }: { onOpen: (id: AppId) => void }) {
-  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="address">📁 <b>Address:</b> C:\WINDOWS\Desktop</div><div className="file-grid">{listFiles().map((file) => <button key={file.name} onDoubleClick={() => file.name === 'README.TXT' ? onOpen('notepad') : file.name === 'MINESW~1.EXE' ? onOpen('minesweeper') : file.name === 'WEB95.URL' ? onOpen('internet-explorer') : undefined}><span>{file.type === 'folder' ? '📂' : file.name.endsWith('.EXE') ? '💣' : file.name.endsWith('.URL') ? '🌐' : '📝'}</span><b>{file.name}</b><small>{file.type === 'folder' ? 'File Folder' : 'File'}</small></button>)}</div><div className="statusbar">{listFiles().length} object(s) &nbsp; &nbsp; 12.4 MB available</div></div>
+  const [files, setFiles] = useState(listFiles())
+  const [selected, setSelected] = useState<string | null>(null)
+  const refresh = () => setFiles(listFiles())
+  const open = (file: VfsFile) => {
+    if (file.name === 'README.TXT') onOpen('notepad')
+    else if (file.name === 'MINESW~1.EXE') onOpen('minesweeper')
+    else if (file.name === 'WEB95.URL') onOpen('internet-explorer')
+  }
+  const newFile = () => { const name = window.prompt('New file name:', 'UNTITLED.TXT'); if (name && createFile(name)) refresh() }
+  const rename = () => { if (!selected) return; const name = window.prompt('Rename item:', selected); if (name && renameFile(selected, name)) refresh() }
+  const remove = () => { if (selected && window.confirm(`Move ${selected} to the Recycle Bin?`)) { deleteFile(selected); setSelected(null); refresh() } }
+  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help <span className="explorer-actions"><button onClick={newFile}>New</button><button onClick={rename} disabled={!selected}>Rename</button><button onClick={remove} disabled={!selected}>Delete</button></span></div><div className="address">📁 <b>Address:</b> C:\WINDOWS\Desktop</div><div className="file-grid">{files.map((file) => <button key={file.name} className={selected === file.name ? 'selected' : ''} onClick={() => setSelected(file.name)} onDoubleClick={() => open(file)}><span>{file.type === 'folder' ? '📂' : file.name.endsWith('.EXE') ? '💣' : file.name.endsWith('.URL') ? '🌐' : '📝'}</span><b>{file.name}</b><small>{file.type === 'folder' ? 'File Folder' : `${file.size ?? file.content?.length ?? 0} bytes`}</small></button>)}</div><div className="statusbar">{files.length} object(s) &nbsp; &nbsp; 12.4 MB available</div></div>
+}
+
+function RecycleBin() {
+  const [items, setItems] = useState(listRecycle())
+  const refresh = () => setItems(listRecycle())
+  return <div className="recycle"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help <button onClick={() => { emptyRecycle(); refresh() }}>Empty Recycle Bin</button></div><div className="file-grid">{items.map((item) => <button key={`${item.name}-${item.deletedAt}`} onDoubleClick={() => { restoreRecycle(item.name); refresh() }}><span>🗑️</span><b>{item.name}</b><small>Double-click to restore</small></button>)}</div><div className="statusbar">{items.length} object(s)</div></div>
+}
+
+function ControlPanel({ onOpen }: { onOpen: (id: AppId) => void }) {
+  const tools: Array<[string, string, AppId?]> = [['🖥️', 'Display', undefined], ['🕘', 'Date/Time', undefined], ['🖨️', 'Printers', 'printer'], ['⌨️', 'Keyboard', undefined], ['🖱️', 'Mouse', undefined], ['🔊', 'Sounds', 'media-player'], ['🌐', 'Network', undefined], ['📦', 'Add/Remove Programs', undefined], ['❓', 'Accessibility Options', 'help']]
+  return <div className="control-panel"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="control-grid">{tools.map(([icon, label, app]) => <button key={label} onClick={() => app ? onOpen(app) : window.alert(`${label} settings are managed by Windows 95 Web Edition.`)}><span>{icon}</span><b>{label}</b></button>)}</div></div>
+}
+
+function Calculator() {
+  const [value, setValue] = useState('0')
+  const [memory, setMemory] = useState(0)
+  const [operator, setOperator] = useState<string | null>(null)
+  const [stored, setStored] = useState(0)
+  const press = (key: string) => {
+    if (/^\d$/.test(key) || key === '.') setValue(value === '0' ? key : value + key)
+    else if (key === 'C') { setValue('0'); setOperator(null) }
+    else if (key === 'M+') setMemory(memory + Number(value))
+    else if (key === 'MR') setValue(String(memory))
+    else if (key === '=') { if (operator) setValue(String(operator === '+' ? stored + Number(value) : operator === '-' ? stored - Number(value) : operator === '×' ? stored * Number(value) : stored / Number(value))); setOperator(null) }
+    else { setStored(Number(value)); setOperator(key); setValue('0') }
+  }
+  return <div className="calculator"><input readOnly value={value} /><div className="calc-grid">{['MC','MR','M+','C','7','8','9','÷','4','5','6','×','1','2','3','-','0','.','=','+'].map((key) => <button key={key} onClick={() => press(key)}>{key}</button>)}</div></div>
+}
+
+function WordPad() {
+  const [text, setText] = useState('Welcome to WordPad.\n\nType your document here.')
+  return <div className="wordpad"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Insert&nbsp;&nbsp; Format&nbsp;&nbsp; Help</div><div className="formatbar"><select defaultValue="Arial"><option>Arial</option><option>Times New Roman</option><option>Courier New</option></select><select defaultValue="12"><option>10</option><option>12</option><option>16</option><option>24</option></select><button><b>B</b></button><button><i>I</i></button><button><u>U</u></button><button>≡</button><button>≣</button></div><textarea value={text} onChange={(event) => setText(event.target.value)} /><div className="statusbar">Document &nbsp; {text.length} characters</div></div>
+}
+
+function Help() {
+  return <div className="help-app"><div className="menu-strip">Help&nbsp;&nbsp; Bookmark&nbsp;&nbsp; Options</div><div className="help-layout"><aside><b>Contents</b><button>Windows 95 basics</button><button>Managing files</button><button>Using accessories</button><button>Troubleshooting</button></aside><article><h2>Windows Help</h2><p>Welcome to Windows 95 Web Edition Help.</p><h3>Getting started</h3><p>Double-click desktop icons to launch applications. Use Start to access programs, settings, Find, Help, Run, and Shut Down.</p><h3>Managing files</h3><p>Open My Computer to create, rename, delete, and open files. Deleted items can be restored from the Recycle Bin.</p></article></div></div>
+}
+
+function RunDialog({ onOpen }: { onOpen: (id: AppId) => void }) {
+  const [command, setCommand] = useState('')
+  const run = () => { const value = command.toLowerCase(); const match: Array<[string, AppId]> = [['notepad', 'notepad'], ['calc', 'calculator'], ['mspaint', 'paint'], ['winmine', 'minesweeper'], ['explorer', 'computer'], ['wordpad', 'wordpad'], ['help', 'help']]; const found = match.find(([name]) => value.includes(name)); if (found) onOpen(found[1]); else window.alert('Windows cannot find this command.') }
+  return <div className="run-dialog"><span className="run-icon">▶️</span><div><h3>Run</h3><p>Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.</p><input autoFocus value={command} onChange={(event) => setCommand(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && run()} /><div><button onClick={run}>OK</button><button>Cancel</button><button>Browse...</button></div></div></div>
 }
