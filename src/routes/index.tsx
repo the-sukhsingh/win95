@@ -233,19 +233,59 @@ function Calculator() {
   const [value, setValue] = useState('0')
   const [memory, setMemory] = useState(0)
   const [operator, setOperator] = useState<string | null>(null)
-  const [stored, setStored] = useState(0)
-  const press = (key: string) => {
-    if (/^\d$/.test(key) || key === '.') setValue(value === '0' ? key : value + key)
-    else if (key === 'C') { setValue('0'); setOperator(null); setStored(0) }
-    else if (key === 'MC') setMemory(0)
-    else if (key === 'M+') setMemory(memory + Number(value))
-    else if (key === 'MR') setValue(String(memory))
-    else if (key === '√') setValue(String(Math.sqrt(Number(value))))
-    else if (key === '±') setValue(String(Number(value) * -1))
-    else if (key === '=') { if (operator) setValue(String(operator === '+' ? stored + Number(value) : operator === '-' ? stored - Number(value) : operator === '×' ? stored * Number(value) : stored / Number(value))); setOperator(null) }
-    else { setStored(Number(value)); setOperator(key); setValue('0') }
+  const [stored, setStored] = useState<number | null>(null)
+  const [waitingForOperand, setWaitingForOperand] = useState(false)
+  const [error, setError] = useState(false)
+  const calculate = (left: number, right: number, operation: string) => {
+    if (operation === '+') return left + right
+    if (operation === '-') return left - right
+    if (operation === '×') return left * right
+    if (operation === '÷') return right === 0 ? null : left / right
+    return right
   }
-  return <div className="calculator"><input readOnly value={value} /><div className="calc-mode"><button>Standard</button><button>Scientific</button></div><div className="calc-grid">{['MC','MR','M+','C','√','±','7','8','9','÷','4','5','6','×','1','2','3','-','0','.','=','+'].map((key) => <button key={key} onClick={() => press(key)}>{key}</button>)}</div></div>
+  const press = (key: string) => {
+    if (/^\d$/.test(key)) {
+      setError(false)
+      setValue(waitingForOperand || value === '0' ? key : value + key)
+      setWaitingForOperand(false)
+    } else if (key === '.') {
+      setError(false)
+      if (waitingForOperand) { setValue('0.'); setWaitingForOperand(false) }
+      else if (!value.includes('.')) setValue(`${value}.`)
+    } else if (key === 'C') { setValue('0'); setOperator(null); setStored(null); setWaitingForOperand(false); setError(false) }
+    else if (key === 'MC') setMemory(0)
+    else if (key === 'M+') setMemory(memory + (Number(value) || 0))
+    else if (key === 'MR') { setValue(String(memory)); setWaitingForOperand(false); setError(false) }
+    else if (key === '√') {
+      const result = Math.sqrt(Number(value))
+      if (!Number.isFinite(result)) { setValue('Error'); setError(true) } else setValue(String(result))
+      setWaitingForOperand(true)
+    } else if (key === '±' && !error) setValue(String(Number(value) * -1))
+    else if (key === '=') {
+      if (!operator || stored === null || error) return
+      const result = calculate(stored, Number(value), operator)
+      if (result === null || !Number.isFinite(result)) { setValue('Cannot divide by zero'); setError(true) }
+      else { setValue(String(result)); setStored(result) }
+      setOperator(null)
+      setWaitingForOperand(true)
+    } else if (error) {
+      setValue('0')
+      setError(false)
+      setStored(null)
+      setOperator(null)
+    } else if (['+', '-', '×', '÷'].includes(key)) {
+      const current = Number(value)
+      if (operator && stored !== null && !waitingForOperand) {
+        const result = calculate(stored, current, operator)
+        if (result === null || !Number.isFinite(result)) { setValue('Cannot divide by zero'); setError(true); setOperator(null); return }
+        setStored(result)
+        setValue(String(result))
+      } else if (stored === null) setStored(current)
+      setOperator(key)
+      setWaitingForOperand(true)
+    }
+  }
+  return <div className="calculator"><input aria-label="Calculator display" readOnly value={value} /><div className="calc-mode"><button>Standard</button><button>Scientific</button></div><div className="calc-grid">{['MC','MR','M+','C','√','±','7','8','9','÷','4','5','6','×','1','2','3','-','0','.','=','+'].map((key) => <button key={key} onClick={() => press(key)}>{key}</button>)}</div></div>
 }
 
 function WordPad() {
