@@ -48,6 +48,16 @@ export function copyFile(sourceName: string, targetName = `${sourceName} - Copy`
   return true
 }
 
+export function moveFile(sourceName: string, targetName: string) {
+  const files = listFiles()
+  const source = files.find((item) => item.name.toLowerCase() === sourceName.toLowerCase())
+  if (!source || files.some((item) => item.name.toLowerCase() === targetName.toLowerCase())) return false
+  source.name = targetName
+  source.modified = new Date().toISOString()
+  saveFiles(files)
+  return true
+}
+
 export function deleteFile(name: string, permanent = false) {
   const files = listFiles()
   const index = files.findIndex((item) => item.name.toLowerCase() === name.toLowerCase())

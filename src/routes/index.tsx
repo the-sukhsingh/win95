@@ -8,7 +8,7 @@ import { Terminal } from '../components/apps/Terminal'
 import { Paint } from '../components/apps/Paint'
 import { InternetExplorer } from '../components/apps/InternetExplorer'
 import { Solitaire } from '../components/apps/Solitaire'
-import { copyFile, createFile, createFile as createFolder, deleteFile, emptyRecycle, listFiles, listRecycle, renameFile, restoreRecycle, type VfsFile } from '../lib/vfs'
+import { copyFile, createFile, createFile as createFolder, deleteFile, emptyRecycle, listFiles, listRecycle, moveFile, renameFile, restoreRecycle, type VfsFile } from '../lib/vfs'
 import { APP_META, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
 export const Route = createFileRoute('/')({ component: Win95Desktop })
@@ -82,6 +82,8 @@ function Win95Desktop() {
       <div className="desktop-brand">Windows 95<span>WEB EDITION</span></div>
       <div className="desktop-icons">
         <DesktopIcon icon="🖥️" label="My Computer" onOpen={() => openApp('computer')} />
+        <DesktopIcon icon="🌐" label="Network Neighborhood" onOpen={() => openApp('network')} />
+        <DesktopIcon icon="📨" label="Inbox" onOpen={() => openApp('inbox')} />
         <DesktopIcon icon="🗑️" label="Recycle Bin" onOpen={() => openApp('recycle')} />
         <DesktopIcon icon="🌐" label="Internet Explorer" onOpen={() => openApp('internet-explorer')} />
         <DesktopIcon icon="📝" label="Notepad" onOpen={() => openApp('notepad')} />
@@ -177,6 +179,8 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'cd-player') return <MediaPlayer compact />
   if (id === 'volume-control') return <VolumeControl />
   if (id === 'settings') return <ControlPanel onOpen={onOpen} />
+  if (id === 'network') return <InfoApp title="Network Neighborhood" icon="🌐" text="No network computers are currently connected. Use Control Panel > Network to configure a network." />
+  if (id === 'inbox') return <InfoApp title="Inbox" icon="📨" text="Microsoft Exchange Web Edition is ready. No new messages." />
   return <Welcome onOpen={onOpen} />
 }
 
@@ -188,6 +192,9 @@ function FileExplorer({ onOpen }: { onOpen: (id: AppId) => void }) {
   const [files, setFiles] = useState(listFiles())
   const [selected, setSelected] = useState<string | null>(null)
   const [clipboard, setClipboard] = useState<string | null>(null)
+  const [cut, setCut] = useState(false)
+  const [view, setView] = useState<'icons' | 'list' | 'details'>('icons')
+  const [sort, setSort] = useState<'name' | 'type' | 'size'>('name')
   const refresh = () => setFiles(listFiles())
   const open = (file: VfsFile) => {
     if (file.name === 'README.TXT') onOpen('notepad')
@@ -198,8 +205,13 @@ function FileExplorer({ onOpen }: { onOpen: (id: AppId) => void }) {
   const newFolder = () => { const name = window.prompt('New folder name:', 'NEW FOLDER'); if (name && createFolder(name, 'folder')) refresh() }
   const rename = () => { if (!selected) return; const name = window.prompt('Rename item:', selected); if (name && renameFile(selected, name)) refresh() }
   const remove = () => { if (selected && window.confirm(`Move ${selected} to the Recycle Bin?`)) { deleteFile(selected); setSelected(null); refresh() } }
-  const paste = () => { if (clipboard && copyFile(clipboard, `${clipboard} - Copy`)) { setClipboard(null); refresh() } }
-  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help <span className="explorer-actions"><button onClick={newFile}>New File</button><button onClick={newFolder}>New Folder</button><button onClick={() => selected && setClipboard(selected)} disabled={!selected}>Copy</button><button onClick={paste} disabled={!clipboard}>Paste</button><button onClick={rename} disabled={!selected}>Rename</button><button onClick={remove} disabled={!selected}>Delete</button></span></div><div className="address">📁 <b>Address:</b> C:\WINDOWS\Desktop</div><div className="file-grid">{files.map((file) => <button key={file.name} className={selected === file.name ? 'selected' : ''} onClick={() => setSelected(file.name)} onDoubleClick={() => open(file)}><span>{file.type === 'folder' ? '📂' : file.name.endsWith('.EXE') ? '💣' : file.name.endsWith('.URL') ? '🌐' : file.name.endsWith('.LNK') ? '🔗' : '📝'}</span><b>{file.name}</b><small>{file.type === 'folder' ? 'File Folder' : `${file.size ?? file.content?.length ?? 0} bytes`}</small></button>)}</div><div className="statusbar">{files.length} object(s){clipboard ? ` • Clipboard: ${clipboard}` : ''} &nbsp; &nbsp; 12.4 MB available</div></div>
+  const paste = () => { if (!clipboard) return; const worked = cut ? moveFile(clipboard, `${clipboard} - Moved`) : copyFile(clipboard, `${clipboard} - Copy`); if (worked) { setClipboard(null); setCut(false); refresh() } }
+  const sorted = [...files].sort((a, b) => sort === 'type' ? a.type.localeCompare(b.type) : sort === 'size' ? (a.size ?? 0) - (b.size ?? 0) : a.name.localeCompare(b.name))
+  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help <span className="explorer-actions"><button onClick={newFile}>New File</button><button onClick={newFolder}>New Folder</button><button onClick={() => { if (selected) { setClipboard(selected); setCut(false) } }} disabled={!selected}>Copy</button><button onClick={() => { if (selected) { setClipboard(selected); setCut(true) } }} disabled={!selected}>Cut</button><button onClick={paste} disabled={!clipboard}>Paste</button><button onClick={rename} disabled={!selected}>Rename</button><button onClick={remove} disabled={!selected}>Delete</button></span></div><div className="address"><select defaultValue="C:"><option>C:</option><option>A: Floppy Disk</option><option>D: CD Drive</option><option>Network Neighborhood</option></select> <b>C:\WINDOWS\Desktop</b><span className="view-buttons"><button onClick={() => setView('icons')}>▦</button><button onClick={() => setView('list')}>☷</button><button onClick={() => setView('details')}>☰</button><select value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="name">Name</option><option value="type">Type</option><option value="size">Size</option></select></span></div><div className={`file-grid file-view-${view}`}>{sorted.map((file) => <button key={file.name} className={selected === file.name ? 'selected' : ''} onClick={() => setSelected(file.name)} onDoubleClick={() => open(file)} onContextMenu={(event) => { event.preventDefault(); window.alert(`${file.name}\nType: ${file.type === 'folder' ? 'File folder' : 'File'}\nSize: ${file.size ?? file.content?.length ?? 0} bytes`) }}><span>{file.type === 'folder' ? '📂' : file.name.endsWith('.EXE') ? '💣' : file.name.endsWith('.URL') ? '🌐' : file.name.endsWith('.LNK') ? '🔗' : '📝'}</span><b>{file.name}</b><small>{file.type === 'folder' ? 'File Folder' : `${file.size ?? file.content?.length ?? 0} bytes`}</small></button>)}</div><div className="statusbar">{files.length} object(s){clipboard ? ` • ${cut ? 'Cut' : 'Copied'}: ${clipboard}` : ''} &nbsp; &nbsp; 12.4 MB available</div></div>
+}
+
+function InfoApp({ title, icon, text }: { title: string; icon: string; text: string }) {
+  return <div className="info-app"><div className="info-hero"><span>{icon}</span><div><h2>{title}</h2><p>{text}</p></div></div><div className="info-actions"><button onClick={() => window.alert(text)}>Properties</button><button onClick={() => window.alert('This feature is configured through Control Panel.')}>Configure</button></div></div>
 }
 
 function RecycleBin() {

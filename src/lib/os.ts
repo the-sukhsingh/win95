@@ -1,4 +1,4 @@
-export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer' | 'recycle' | 'control-panel' | 'run' | 'help' | 'calculator' | 'wordpad' | 'freecell' | 'media-player' | 'printer' | 'find' | 'system-tools' | 'character-map' | 'clipboard' | 'sound-recorder' | 'phone-dialer' | 'cd-player' | 'volume-control' | 'settings'
+export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer' | 'recycle' | 'control-panel' | 'run' | 'help' | 'calculator' | 'wordpad' | 'freecell' | 'media-player' | 'printer' | 'find' | 'system-tools' | 'character-map' | 'clipboard' | 'sound-recorder' | 'phone-dialer' | 'cd-player' | 'volume-control' | 'settings' | 'network' | 'inbox'
 
 export type WindowState = {
   id: AppId
@@ -40,6 +40,8 @@ export const APP_META: Record<AppId, AppMeta> = {
   'cd-player': { title: 'CD Player', icon: '💿' },
   'volume-control': { title: 'Volume Control', icon: '🔊' },
   settings: { title: 'Windows Settings', icon: '⚙️' },
+  network: { title: 'Network Neighborhood', icon: '🌐' },
+  inbox: { title: 'Inbox - Microsoft Exchange', icon: '📨' },
 }
 
 export const DEFAULT_WINDOWS: WindowState[] = [{
