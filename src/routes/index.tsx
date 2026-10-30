@@ -7,6 +7,7 @@ import { Notepad } from '../components/apps/Notepad'
 import { Terminal } from '../components/apps/Terminal'
 import { Paint } from '../components/apps/Paint'
 import { InternetExplorer } from '../components/apps/InternetExplorer'
+import { Solitaire } from '../components/apps/Solitaire'
 import { createFile, deleteFile, emptyRecycle, listFiles, listRecycle, renameFile, restoreRecycle, type VfsFile } from '../lib/vfs'
 import { APP_META, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
@@ -68,6 +69,7 @@ function Win95Desktop() {
         <DesktopIcon icon="💣" label="Minesweeper" onOpen={() => openApp('minesweeper')} />
         <DesktopIcon icon="🎨" label="Paint" onOpen={() => openApp('paint')} />
         <DesktopIcon icon="🧮" label="Calculator" onOpen={() => openApp('calculator')} />
+        <DesktopIcon icon="🃏" label="Solitaire" onOpen={() => openApp('solitaire')} />
       </div>
 
       {windows.map((item) => item.minimized ? null : (
@@ -124,6 +126,8 @@ function StartMenu({ onOpen, onShutdown }: { onOpen: (id: AppId) => void; onShut
     <button className="start-item" onClick={() => onOpen('calculator')}><span>🧮</span><b>Accessories</b><em>Calculator</em></button>
     <button className="start-item" onClick={() => onOpen('wordpad')}><span>📄</span><b>Accessories</b><em>WordPad</em></button>
     <button className="start-item" onClick={() => onOpen('help')}><span>❓</span><b>Help</b></button>
+    <button className="start-item" onClick={() => onOpen('solitaire')}><span>🃏</span><b>Games</b><em>Solitaire</em></button>
+    <button className="start-item" onClick={() => onOpen('freecell')}><span>🃏</span><b>Games</b><em>FreeCell</em></button>
     <button className="start-item" onClick={() => onOpen('run')}><span>▶️</span><b>Run...</b></button>
     <hr />    <button className="start-item" onClick={onShutdown}><span>⏻</span><b>Shut Down...</b></button>
   </div></div>
@@ -142,6 +146,8 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'wordpad') return <WordPad />
   if (id === 'help') return <Help />
   if (id === 'run') return <RunDialog onOpen={onOpen} />
+  if (id === 'solitaire') return <Solitaire />
+  if (id === 'freecell') return <Solitaire freeCell />
   return <Welcome onOpen={onOpen} />
 }
 
@@ -182,18 +188,26 @@ function Calculator() {
   const [stored, setStored] = useState(0)
   const press = (key: string) => {
     if (/^\d$/.test(key) || key === '.') setValue(value === '0' ? key : value + key)
-    else if (key === 'C') { setValue('0'); setOperator(null) }
+    else if (key === 'C') { setValue('0'); setOperator(null); setStored(0) }
+    else if (key === 'MC') setMemory(0)
     else if (key === 'M+') setMemory(memory + Number(value))
     else if (key === 'MR') setValue(String(memory))
+    else if (key === '√') setValue(String(Math.sqrt(Number(value))))
+    else if (key === '±') setValue(String(Number(value) * -1))
     else if (key === '=') { if (operator) setValue(String(operator === '+' ? stored + Number(value) : operator === '-' ? stored - Number(value) : operator === '×' ? stored * Number(value) : stored / Number(value))); setOperator(null) }
     else { setStored(Number(value)); setOperator(key); setValue('0') }
   }
-  return <div className="calculator"><input readOnly value={value} /><div className="calc-grid">{['MC','MR','M+','C','7','8','9','÷','4','5','6','×','1','2','3','-','0','.','=','+'].map((key) => <button key={key} onClick={() => press(key)}>{key}</button>)}</div></div>
+  return <div className="calculator"><input readOnly value={value} /><div className="calc-mode"><button>Standard</button><button>Scientific</button></div><div className="calc-grid">{['MC','MR','M+','C','√','±','7','8','9','÷','4','5','6','×','1','2','3','-','0','.','=','+'].map((key) => <button key={key} onClick={() => press(key)}>{key}</button>)}</div></div>
 }
 
 function WordPad() {
   const [text, setText] = useState('Welcome to WordPad.\n\nType your document here.')
-  return <div className="wordpad"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Insert&nbsp;&nbsp; Format&nbsp;&nbsp; Help</div><div className="formatbar"><select defaultValue="Arial"><option>Arial</option><option>Times New Roman</option><option>Courier New</option></select><select defaultValue="12"><option>10</option><option>12</option><option>16</option><option>24</option></select><button><b>B</b></button><button><i>I</i></button><button><u>U</u></button><button>≡</button><button>≣</button></div><textarea value={text} onChange={(event) => setText(event.target.value)} /><div className="statusbar">Document &nbsp; {text.length} characters</div></div>
+  const [font, setFont] = useState('Arial')
+  const [size, setSize] = useState('14px')
+  const [weight, setWeight] = useState<'normal' | 'bold'>('normal')
+  const [style, setStyle] = useState<'normal' | 'italic'>('normal')
+  const download = () => { const anchor = document.createElement('a'); anchor.href = URL.createObjectURL(new Blob([text], { type: 'text/rtf' })); anchor.download = 'DOCUMENT.RTF'; anchor.click() }
+  return <div className="wordpad"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Insert&nbsp;&nbsp; Format&nbsp;&nbsp; Help</div><div className="formatbar"><select value={font} onChange={(event) => setFont(event.target.value)}><option>Arial</option><option>Times New Roman</option><option>Courier New</option></select><select value={size} onChange={(event) => setSize(event.target.value)}><option>10px</option><option>14px</option><option>16px</option><option>24px</option></select><button onClick={() => setWeight(weight === 'bold' ? 'normal' : 'bold')}><b>B</b></button><button onClick={() => setStyle(style === 'italic' ? 'normal' : 'italic')}><i>I</i></button><button><u>U</u></button><button>≡</button><button>≣</button><button onClick={download}>Save</button></div><textarea value={text} onChange={(event) => setText(event.target.value)} style={{ fontFamily: font, fontSize: size, fontWeight: weight, fontStyle: style }} /><div className="statusbar">Document &nbsp; {text.length} characters</div></div>
 }
 
 function Help() {
