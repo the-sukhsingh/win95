@@ -8,7 +8,7 @@ import { Terminal } from '../components/apps/Terminal'
 import { Paint } from '../components/apps/Paint'
 import { InternetExplorer } from '../components/apps/InternetExplorer'
 import { Solitaire } from '../components/apps/Solitaire'
-import { createFile, deleteFile, emptyRecycle, listFiles, listRecycle, renameFile, restoreRecycle, type VfsFile } from '../lib/vfs'
+import { copyFile, createFile, createFile as createFolder, deleteFile, emptyRecycle, listFiles, listRecycle, renameFile, restoreRecycle, type VfsFile } from '../lib/vfs'
 import { APP_META, loadWindows, saveWindows, type AppId, type WindowState } from '../lib/os'
 
 export const Route = createFileRoute('/')({ component: Win95Desktop })
@@ -187,6 +187,7 @@ function Welcome({ onOpen }: { onOpen: (id: AppId) => void }) {
 function FileExplorer({ onOpen }: { onOpen: (id: AppId) => void }) {
   const [files, setFiles] = useState(listFiles())
   const [selected, setSelected] = useState<string | null>(null)
+  const [clipboard, setClipboard] = useState<string | null>(null)
   const refresh = () => setFiles(listFiles())
   const open = (file: VfsFile) => {
     if (file.name === 'README.TXT') onOpen('notepad')
@@ -194,9 +195,11 @@ function FileExplorer({ onOpen }: { onOpen: (id: AppId) => void }) {
     else if (file.name === 'WEB95.URL') onOpen('internet-explorer')
   }
   const newFile = () => { const name = window.prompt('New file name:', 'UNTITLED.TXT'); if (name && createFile(name)) refresh() }
+  const newFolder = () => { const name = window.prompt('New folder name:', 'NEW FOLDER'); if (name && createFolder(name, 'folder')) refresh() }
   const rename = () => { if (!selected) return; const name = window.prompt('Rename item:', selected); if (name && renameFile(selected, name)) refresh() }
   const remove = () => { if (selected && window.confirm(`Move ${selected} to the Recycle Bin?`)) { deleteFile(selected); setSelected(null); refresh() } }
-  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help <span className="explorer-actions"><button onClick={newFile}>New</button><button onClick={rename} disabled={!selected}>Rename</button><button onClick={remove} disabled={!selected}>Delete</button></span></div><div className="address">📁 <b>Address:</b> C:\WINDOWS\Desktop</div><div className="file-grid">{files.map((file) => <button key={file.name} className={selected === file.name ? 'selected' : ''} onClick={() => setSelected(file.name)} onDoubleClick={() => open(file)}><span>{file.type === 'folder' ? '📂' : file.name.endsWith('.EXE') ? '💣' : file.name.endsWith('.URL') ? '🌐' : '📝'}</span><b>{file.name}</b><small>{file.type === 'folder' ? 'File Folder' : `${file.size ?? file.content?.length ?? 0} bytes`}</small></button>)}</div><div className="statusbar">{files.length} object(s) &nbsp; &nbsp; 12.4 MB available</div></div>
+  const paste = () => { if (clipboard && copyFile(clipboard, `${clipboard} - Copy`)) { setClipboard(null); refresh() } }
+  return <div className="explorer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help <span className="explorer-actions"><button onClick={newFile}>New File</button><button onClick={newFolder}>New Folder</button><button onClick={() => selected && setClipboard(selected)} disabled={!selected}>Copy</button><button onClick={paste} disabled={!clipboard}>Paste</button><button onClick={rename} disabled={!selected}>Rename</button><button onClick={remove} disabled={!selected}>Delete</button></span></div><div className="address">📁 <b>Address:</b> C:\WINDOWS\Desktop</div><div className="file-grid">{files.map((file) => <button key={file.name} className={selected === file.name ? 'selected' : ''} onClick={() => setSelected(file.name)} onDoubleClick={() => open(file)}><span>{file.type === 'folder' ? '📂' : file.name.endsWith('.EXE') ? '💣' : file.name.endsWith('.URL') ? '🌐' : file.name.endsWith('.LNK') ? '🔗' : '📝'}</span><b>{file.name}</b><small>{file.type === 'folder' ? 'File Folder' : `${file.size ?? file.content?.length ?? 0} bytes`}</small></button>)}</div><div className="statusbar">{files.length} object(s){clipboard ? ` • Clipboard: ${clipboard}` : ''} &nbsp; &nbsp; 12.4 MB available</div></div>
 }
 
 function RecycleBin() {
