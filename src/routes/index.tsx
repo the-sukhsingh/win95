@@ -136,25 +136,18 @@ function ShutdownScreen({ onPowerOn }: { onPowerOn: () => void }) {
 }
 
 function StartMenu({ onOpen, onShutdown }: { onOpen: (id: AppId) => void; onShutdown: () => void }) {
+  const [expanded, setExpanded] = useState<'programs' | 'documents' | 'settings' | null>(null)
+  const item = (icon: string, label: string, id: AppId, detail?: string) => <button className="start-item" onClick={() => onOpen(id)}><span>{icon}</span><b>{label}</b>{detail && <em>{detail}</em>}</button>
   return <div className="start-menu" onClick={(event) => event.stopPropagation()}><div className="start-rail">Windows<span>95</span></div><div className="start-items">
-    <button className="start-item featured" onClick={() => onOpen('about')}><span>▤</span><b>Welcome</b><em>Read me</em></button>
-    <button className="start-item" onClick={() => onOpen('computer')}><span>🖥️</span><b>My Computer</b></button>
-    <button className="start-item" onClick={() => onOpen('control-panel')}><span>⚙️</span><b>Settings</b><em>Control Panel</em></button>
-    <button className="start-item" onClick={() => onOpen('printer')}><span>🖨️</span><b>Settings</b><em>Printers</em></button>
-    <button className="start-item" onClick={() => onOpen('internet-explorer')}><span>🌐</span><b>Internet Explorer</b><em>Browse the web</em></button>
-    <button className="start-item" onClick={() => onOpen('notepad')}><span>📝</span><b>Accessories</b><em>Notepad</em></button>
-    <button className="start-item" onClick={() => onOpen('minesweeper')}><span>💣</span><b>Games</b><em>Minesweeper</em></button>
-    <button className="start-item" onClick={() => onOpen('paint')}><span>🎨</span><b>Accessories</b><em>Paint</em></button>
-    <button className="start-item" onClick={() => onOpen('terminal')}><span>▣</span><b>MS-DOS Prompt</b></button>
-    <button className="start-item" onClick={() => onOpen('calculator')}><span>🧮</span><b>Accessories</b><em>Calculator</em></button>
-    <button className="start-item" onClick={() => onOpen('wordpad')}><span>📄</span><b>Accessories</b><em>WordPad</em></button>
-    <button className="start-item" onClick={() => onOpen('help')}><span>❓</span><b>Help</b></button>
-    <button className="start-item" onClick={() => onOpen('solitaire')}><span>🃏</span><b>Games</b><em>Solitaire</em></button>
-    <button className="start-item" onClick={() => onOpen('freecell')}><span>🃏</span><b>Games</b><em>FreeCell</em></button>
-    <button className="start-item" onClick={() => onOpen('run')}><span>▶️</span><b>Run...</b></button>
-    <button className="start-item" onClick={() => onOpen('find')}><span>🔎</span><b>Find</b><em>Files or Folders</em></button>
-    <button className="start-item" onClick={() => onOpen('system-tools')}><span>🛠️</span><b>Programs</b><em>System Tools</em></button>
-    <hr />    <button className="start-item" onClick={onShutdown}><span>⏻</span><b>Shut Down...</b></button>
+    {item('▤', 'Welcome', 'about', 'Read me')}
+    <button className={`start-item start-folder ${expanded === 'programs' ? 'open' : ''}`} onClick={() => setExpanded(expanded === 'programs' ? null : 'programs')}><span>📁</span><b>Programs</b><i>▶</i></button>
+    {expanded === 'programs' && <div className="start-submenu">{item('🌐', 'Internet Explorer', 'internet-explorer', 'Browse the web')}{item('📝', 'Accessories', 'notepad', 'Notepad')}{item('🎨', 'Paint', 'paint')}{item('🧮', 'Calculator', 'calculator')}{item('📄', 'WordPad', 'wordpad')}{item('🎙️', 'Sound Recorder', 'sound-recorder')}{item('Ω', 'Character Map', 'character-map')}{item('🛠️', 'System Tools', 'system-tools')}</div>}
+    <button className={`start-item start-folder ${expanded === 'documents' ? 'open' : ''}`} onClick={() => setExpanded(expanded === 'documents' ? null : 'documents')}><span>📂</span><b>Documents</b><i>▶</i></button>
+    {expanded === 'documents' && <div className="start-submenu">{item('🖥️', 'My Computer', 'computer')}{item('🗑️', 'Recycle Bin', 'recycle')}{item('🔎', 'Find Files', 'find', 'Files or Folders')}</div>}
+    <button className={`start-item start-folder ${expanded === 'settings' ? 'open' : ''}`} onClick={() => setExpanded(expanded === 'settings' ? null : 'settings')}><span>⚙️</span><b>Settings</b><i>▶</i></button>
+    {expanded === 'settings' && <div className="start-submenu">{item('⚙️', 'Control Panel', 'control-panel')}{item('🖨️', 'Printers', 'printer')}{item('🔊', 'Volume Control', 'volume-control')}{item('💿', 'CD Player', 'cd-player')}</div>}
+    {item('💣', 'Minesweeper', 'minesweeper')}{item('🃏', 'Solitaire', 'solitaire')}{item('🃏', 'FreeCell', 'freecell')}{item('▣', 'MS-DOS Prompt', 'terminal')}{item('❓', 'Help', 'help')}{item('▶️', 'Run...', 'run')}
+    <hr /><button className="start-item" onClick={onShutdown}><span>⏻</span><b>Shut Down...</b></button>
   </div></div>
 }
 
@@ -177,6 +170,13 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'printer') return <Printer />
   if (id === 'find') return <FindFiles />
   if (id === 'system-tools') return <SystemTools />
+  if (id === 'character-map') return <CharacterMap />
+  if (id === 'clipboard') return <ClipboardViewer />
+  if (id === 'sound-recorder') return <SoundRecorder />
+  if (id === 'phone-dialer') return <PhoneDialer />
+  if (id === 'cd-player') return <MediaPlayer compact />
+  if (id === 'volume-control') return <VolumeControl />
+  if (id === 'settings') return <ControlPanel onOpen={onOpen} />
   return <Welcome onOpen={onOpen} />
 }
 
@@ -252,10 +252,10 @@ function RunDialog({ onOpen }: { onOpen: (id: AppId) => void }) {
   return <div className="run-dialog"><span className="run-icon">▶️</span><div><h3>Run</h3><p>Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.</p><input autoFocus value={command} onChange={(event) => setCommand(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && run()} /><div><button onClick={run}>OK</button><button>Cancel</button><button>Browse...</button></div></div></div>
 }
 
-function MediaPlayer() {
+function MediaPlayer({ compact = false }: { compact?: boolean }) {
   const [file, setFile] = useState('')
   const [playing, setPlaying] = useState(false)
-  return <div className="media-player"><div className="menu-strip">File&nbsp;&nbsp; Device&nbsp;&nbsp; Play&nbsp;&nbsp; Help</div><div className="media-screen">{playing ? '▶ Playing' : '■ Stopped'}<small>{file || 'No media selected'}</small></div><div className="media-controls"><button onClick={() => setPlaying(false)}>■</button><button onClick={() => setPlaying(true)}>▶</button><button onClick={() => setPlaying(false)}>Ⅱ</button><label>Volume <input type="range" defaultValue="70" /></label></div><input className="media-file" placeholder="WAV, MIDI, AVI, or audio CD track" value={file} onChange={(event) => setFile(event.target.value)} /></div>
+  return <div className="media-player"><div className="menu-strip">File&nbsp;&nbsp; Device&nbsp;&nbsp; Play&nbsp;&nbsp; Help</div><div className="media-screen">{playing ? '▶ Playing' : '■ Stopped'}<small>{file || (compact ? 'Audio CD ready' : 'No media selected')}</small></div><div className="media-controls"><button onClick={() => setPlaying(false)}>■</button><button onClick={() => setPlaying(true)}>▶</button><button onClick={() => setPlaying(false)}>Ⅱ</button><label>Volume <input type="range" defaultValue="70" /></label></div>{!compact && <input className="media-file" placeholder="WAV, MIDI, AVI, or audio CD track" value={file} onChange={(event) => setFile(event.target.value)} />}</div>
 }
 
 function Printer() {
@@ -273,4 +273,36 @@ function SystemTools() {
   const [running, setRunning] = useState<string | null>(null)
   const tools = ['ScanDisk', 'Disk Defragmenter', 'DriveSpace', 'Backup', 'System Monitor', 'Resource Meter', 'Clipboard Viewer', 'Character Map', 'Sound Recorder', 'Phone Dialer']
   return <div className="system-tools"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="tool-list">{tools.map((tool) => <button key={tool} onClick={() => setRunning(tool)}><span>🛠️</span><b>{tool}</b><small>{running === tool ? 'Running...' : 'Double-click to open'}</small></button>)}</div>{running && <div className="tool-output"><b>{running}</b><p>{running} completed successfully. No problems were found on the virtual drive.</p><progress value={100} max={100} /></div>}<div className="statusbar">C:\ &nbsp; 12.4 MB free of 32 MB</div></div>
+}
+
+function CharacterMap() {
+  const chars = '☺☻♥♦♣♠•◘○◙♂♀♪♫☼►◄↕‼¶§▬↨↑↓→←∟↔▲▼ΑΒΓΔΩαβγδεπσμτΦΘΩδ∞≠≤≥'.split('')
+  return <div className="character-map"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; Help</div><div className="char-grid">{chars.map((char) => <button key={char} onClick={() => navigator.clipboard?.writeText(char)}>{char}</button>)}</div><p>Click a character to copy it to the clipboard.</p></div>
+}
+
+function ClipboardViewer() {
+  const [text, setText] = useState('The Windows Clipboard is empty.')
+  return <div className="clipboard-viewer"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><textarea value={text} onChange={(event) => setText(event.target.value)} /><button onClick={() => setText('')}>Clear Clipboard</button></div>
+}
+
+function SoundRecorder() {
+  const [recording, setRecording] = useState(false)
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    if (!recording) return
+    const timer = window.setInterval(() => setSeconds((value) => value + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [recording])
+  return <div className="sound-recorder"><div className="menu-strip">File&nbsp;&nbsp; Edit&nbsp;&nbsp; Effects&nbsp;&nbsp; Help</div><div className="recorder-display">00:{String(seconds).padStart(2, '0')}<div className={recording ? 'wave active' : 'wave'}>▁▃▆▃▁▅▇▂▁▃▆</div></div><div className="recorder-controls"><button onClick={() => setRecording(false)}>■ Stop</button><button onClick={() => setRecording(true)}>● Record</button><button onClick={() => setSeconds(0)}>↶ Rewind</button></div></div>
+}
+
+function PhoneDialer() {
+  const [number, setNumber] = useState('')
+  const [status, setStatus] = useState('Ready')
+  return <div className="phone-dialer"><div className="menu-strip">Phone&nbsp;&nbsp; Edit&nbsp;&nbsp; Help</div><input readOnly value={number} placeholder="Phone number" /><div className="dial-grid">{['1','2','3','4','5','6','7','8','9','*','0','#'].map((key) => <button key={key} onClick={() => setNumber((value) => value + key)}>{key}</button>)}</div><div className="dial-actions"><button onClick={() => setStatus(number ? `Dialing ${number}...` : 'Enter a number')}>Dial</button><button onClick={() => { setNumber(''); setStatus('Ready') }}>Hang Up</button></div><p>{status}</p></div>
+}
+
+function VolumeControl() {
+  const [volume, setVolume] = useState(70)
+  return <div className="volume-control"><div className="menu-strip">Options&nbsp;&nbsp; Help</div><div className="mixer-channel"><span>Master</span><input type="range" min="0" max="100" value={volume} onChange={(event) => setVolume(Number(event.target.value))} /><b>{volume}%</b></div><div className="mixer-channel"><span>Wave</span><input type="range" defaultValue="80" /><b>80%</b></div><div className="mixer-channel"><span>MIDI</span><input type="range" defaultValue="60" /><b>60%</b></div></div>
 }

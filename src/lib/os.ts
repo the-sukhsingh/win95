@@ -1,4 +1,4 @@
-export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer' | 'recycle' | 'control-panel' | 'run' | 'help' | 'calculator' | 'wordpad' | 'freecell' | 'media-player' | 'printer' | 'find' | 'system-tools'
+export type AppId = 'computer' | 'notepad' | 'terminal' | 'minesweeper' | 'about' | 'paint' | 'solitaire' | 'internet-explorer' | 'recycle' | 'control-panel' | 'run' | 'help' | 'calculator' | 'wordpad' | 'freecell' | 'media-player' | 'printer' | 'find' | 'system-tools' | 'character-map' | 'clipboard' | 'sound-recorder' | 'phone-dialer' | 'cd-player' | 'volume-control' | 'settings'
 
 export type WindowState = {
   id: AppId
@@ -33,6 +33,13 @@ export const APP_META: Record<AppId, AppMeta> = {
   printer: { title: 'Printers', icon: '🖨️' },
   find: { title: 'Find: Files or Folders', icon: '🔎' },
   'system-tools': { title: 'System Tools', icon: '🛠️' },
+  'character-map': { title: 'Character Map', icon: 'Ω' },
+  clipboard: { title: 'Clipboard Viewer', icon: '📋' },
+  'sound-recorder': { title: 'Sound Recorder', icon: '🎙️' },
+  'phone-dialer': { title: 'Phone Dialer', icon: '☎️' },
+  'cd-player': { title: 'CD Player', icon: '💿' },
+  'volume-control': { title: 'Volume Control', icon: '🔊' },
+  settings: { title: 'Windows Settings', icon: '⚙️' },
 }
 
 export const DEFAULT_WINDOWS: WindowState[] = [{
