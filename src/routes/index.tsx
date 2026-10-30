@@ -19,6 +19,8 @@ function Win95Desktop() {
   const [activeId, setActiveId] = useState<AppId>('about')
   const [startOpen, setStartOpen] = useState(false)
   const [crt, setCrt] = useState(false)
+  const [taskbarHidden, setTaskbarHidden] = useState(false)
+  const [taskbarTop, setTaskbarTop] = useState(false)
   const [clock, setClock] = useState(new Date())
   const [context, setContext] = useState<{ x: number; y: number } | null>(null)
 
@@ -28,6 +30,18 @@ function Win95Desktop() {
     return () => { window.clearTimeout(timer); window.clearInterval(tick) }
   }, [])
   useEffect(() => saveWindows(windows), [windows])
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.altKey && event.key === 'Tab') {
+        event.preventDefault()
+        const index = windows.findIndex((item) => item.id === activeId)
+        const next = windows[(index + 1) % Math.max(1, windows.length)]
+        if (next) focus(next.id)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [windows, activeId])
 
   const openApp = (id: AppId) => {
     setStartOpen(false)
@@ -53,8 +67,13 @@ function Win95Desktop() {
   if (powerState === 'boot') return <BootScreen onEnter={() => setPowerState('desktop')} />
   if (powerState === 'shutdown') return <ShutdownScreen onPowerOn={() => setPowerState('boot')} />
 
+  const arrange = (mode: 'cascade' | 'tile') => {
+    setWindows((current) => current.map((item, index) => mode === 'cascade'
+      ? { ...item, minimized: false, maximized: false, x: 180 + index * 26, y: 58 + index * 26, z: Date.now() + index }
+      : { ...item, minimized: false, maximized: false, x: 8 + (index % 2) * 50, y: 8 + Math.floor(index / 2) * 36, width: Math.max(320, window.innerWidth / 2 - 20), height: Math.max(220, (window.innerHeight - 70) / 2), z: Date.now() + index }))
+  }
   return (
-    <main className={`desktop ${crt ? 'crt' : ''}`} onClick={() => context && setContext(null)} onContextMenu={(event) => {
+    <main className={`desktop ${crt ? 'crt' : ''} ${taskbarHidden ? 'taskbar-auto-hide' : ''}`} onClick={() => context && setContext(null)} onContextMenu={(event) => {
       if ((event.target as HTMLElement).closest('.window, .taskbar, .start-menu')) return
       event.preventDefault()
       setStartOpen(false)
@@ -86,13 +105,16 @@ function Win95Desktop() {
       {context && <div className="context-menu" style={{ left: context.x, top: context.y }} onClick={(event) => event.stopPropagation()}>
         <button onClick={() => { setContext(null); setCrt((value) => !value) }}>Display properties</button>
         <button onClick={() => openApp('notepad')}>New text document</button>
-        <button onClick={() => setContext(null)}>Arrange icons</button>
+        <button onClick={() => { arrange('cascade'); setContext(null) }}>Cascade windows</button>
+        <button onClick={() => { arrange('tile'); setContext(null) }}>Tile windows</button>
+        <button onClick={() => { setTaskbarHidden((value) => !value); setContext(null) }}>Auto-hide taskbar</button>
+        <button onClick={() => { setTaskbarTop((value) => !value); setContext(null) }}>Move taskbar to {taskbarTop ? 'bottom' : 'top'}</button>
         <hr />
         <button onClick={() => setContext(null)}>Refresh</button>
       </div>}
 
       {startOpen && <StartMenu onOpen={openApp} onShutdown={() => { setStartOpen(false); setPowerState('shutdown') }} />}
-      <footer className="taskbar">
+      <footer className={`taskbar ${taskbarTop ? 'top' : ''}`}>
         <button className={`start-button ${startOpen ? 'pressed' : ''}`} onClick={(event) => { event.stopPropagation(); setStartOpen((value) => !value) }}>
           <strong>⊞</strong> Start
         </button>
@@ -148,6 +170,8 @@ function WindowContent({ id, onOpen }: { id: AppId; onOpen: (id: AppId) => void 
   if (id === 'run') return <RunDialog onOpen={onOpen} />
   if (id === 'solitaire') return <Solitaire />
   if (id === 'freecell') return <Solitaire freeCell />
+  if (id === 'media-player') return <MediaPlayer />
+  if (id === 'printer') return <Printer />
   return <Welcome onOpen={onOpen} />
 }
 
@@ -218,4 +242,15 @@ function RunDialog({ onOpen }: { onOpen: (id: AppId) => void }) {
   const [command, setCommand] = useState('')
   const run = () => { const value = command.toLowerCase(); const match: Array<[string, AppId]> = [['notepad', 'notepad'], ['calc', 'calculator'], ['mspaint', 'paint'], ['winmine', 'minesweeper'], ['explorer', 'computer'], ['wordpad', 'wordpad'], ['help', 'help']]; const found = match.find(([name]) => value.includes(name)); if (found) onOpen(found[1]); else window.alert('Windows cannot find this command.') }
   return <div className="run-dialog"><span className="run-icon">▶️</span><div><h3>Run</h3><p>Type the name of a program, folder, document, or Internet resource, and Windows will open it for you.</p><input autoFocus value={command} onChange={(event) => setCommand(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && run()} /><div><button onClick={run}>OK</button><button>Cancel</button><button>Browse...</button></div></div></div>
+}
+
+function MediaPlayer() {
+  const [file, setFile] = useState('')
+  const [playing, setPlaying] = useState(false)
+  return <div className="media-player"><div className="menu-strip">File&nbsp;&nbsp; Device&nbsp;&nbsp; Play&nbsp;&nbsp; Help</div><div className="media-screen">{playing ? '▶ Playing' : '■ Stopped'}<small>{file || 'No media selected'}</small></div><div className="media-controls"><button onClick={() => setPlaying(false)}>■</button><button onClick={() => setPlaying(true)}>▶</button><button onClick={() => setPlaying(false)}>Ⅱ</button><label>Volume <input type="range" defaultValue="70" /></label></div><input className="media-file" placeholder="WAV, MIDI, AVI, or audio CD track" value={file} onChange={(event) => setFile(event.target.value)} /></div>
+}
+
+function Printer() {
+  const [jobs, setJobs] = useState<string[]>([])
+  return <div className="printer-app"><div className="menu-strip">File&nbsp;&nbsp; Printer&nbsp;&nbsp; View&nbsp;&nbsp; Help</div><div className="printer-head"><span>🖨️</span><div><h3>Printers</h3><p>Manage your installed printers and print queue.</p></div></div><div className="printer-actions"><button onClick={() => setJobs((current) => [...current, `Document ${current.length + 1}.TXT`])}>Print test page</button><button onClick={() => setJobs([])}>Cancel all jobs</button></div><ul>{jobs.map((job) => <li key={job}>📄 {job} <small>Printing</small></li>)}</ul><div className="statusbar">{jobs.length} document(s) in queue &nbsp; • &nbsp; Microsoft Print to Web</div></div>
 }
